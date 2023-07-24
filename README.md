@@ -1,5 +1,9 @@
 # mtu-smpp
-Simple SMPP server wrapper around Dialogic MTU SS7 application
+Simple SMPP server wrapper around Dialogic MTU SS7 application.
+
+Perform the following MAP operations using SMPP:
+
++ Forward short message
 
 ## Install Dialogic
 
