@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 
 bool endserver = false;
+uint64_t gMessageID = 1;
 
 extern "C" int main_inner(int argc, char** argv);
 
@@ -133,7 +134,9 @@ bool processSMPP(int s) {
         
         main_inner(9,n_argv);
         
-        char messageid[] = "1";
+        
+        char messageid[32];
+        snprintf(messageid,32,"%08x",gMessageID++);
         sendSMPP(s,cmd+0x80000000,0x00000000/*ESME_ROK*/,seqno,(uint8_t*)messageid,(int)(strlen(messageid)+1));
         
     }
