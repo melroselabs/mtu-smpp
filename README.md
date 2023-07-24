@@ -28,3 +28,17 @@ Run makeall.sh to build
 ## Run
 
     ./mtu_smpp
+
+### Forward short message
+
+*Forward short message* requires the MSC and IMSI of the destination mobile and follows a *send routing for SM* operation.
+
+Connect using an SMPP client such as https://melroselabs.com/smppclient.  Host is the IP address of the host where mtu_smpp is running.  Any system ID and password can be used with the example code.
+
+Source address field is the originating address for the MAP request (e.g. 12080011047228190600).  This is the gateway MSC (e.g. SMSC address).
+
+Destination address field is the destination address for the MAP request (e.g. 13010008001204448729600010).  This is the MSC serving the destination mobile number.
+
+Short message field is the short message text to be sent to the destination  mobile.
+
+The IMSI is currently hard-coded to 987654321.
