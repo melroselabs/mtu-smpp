@@ -1,7 +1,11 @@
 # mtu-smpp
 Simple SMPP server wrapper around Dialogic MTU SS7 application
 
-## 
+## Install Dialogic
+
+See https://developers.melroselabs.com/docs/sccp-hub-demo-mtu-mtr
+
+## Build updated MTU
 
 Copy mtu_main.c file to mtu_main_mod.c and update main() declaration in new file to:
 
@@ -16,3 +20,7 @@ Add the following to makeall.sh
     make -f mtu_smpp.mak $make_opts
 
 Run makeall.sh to build
+
+## Run
+
+    ./mtu_smpp
