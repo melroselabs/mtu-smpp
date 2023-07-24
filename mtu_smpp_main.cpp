@@ -87,6 +87,60 @@ uint32_t getUint32(uint8_t* buf) {
     return (((((buf[0]<<8)+buf[1])<<8)+buf[2])<<8)+buf[3];
 }
 
+typedef enum { COctetString, Integer, OctetString, NoMoreParams } SMPPTypes;
+typedef struct {
+    SMPPTypes type;
+    char v_coctetstring[256];
+    int v_int;
+    uint8_t v_octetstring[256];
+} SMPPTypeVals;
+
+int parseSMPPPDU( uint8_t* buf, int len, SMPPTypes types[], SMPPTypeVals typevals[] ) {
+    int idx = 0;
+    int param = 0;
+    while (idx<len) {
+        
+        if ( types[param] == NoMoreParams ) break;
+        
+        typevals[param].type = types[param];
+        
+        switch (types[param]) {
+            
+            case COctetString: {
+                typevals[param].v_coctetstring[0] = '\0';
+                strcpy(typevals[param].v_coctetstring,(char*)(buf+idx));
+                idx += 1 + strlen(typevals[param].v_coctetstring);
+                break;
+            }
+            case Integer: {
+                typevals[param].v_int = buf[idx];
+                idx++;
+                break;
+            }
+            case OctetString: {
+                typevals[param].v_octetstring[0] = '\0';
+                strcpy((char*)typevals[param].v_octetstring,(char*)(buf+idx));
+                idx += 1 + strlen((char*)typevals[param].v_octetstring);
+                break;
+            }
+        }
+        
+        param++;
+        
+    }
+    
+    /*for(int i=0;i<param;i++) {
+        printf("%2d: type(%d) co(%s) i(%d) o(%s)\n",
+               i,
+               typevals[i].type,
+               typevals[i].v_coctetstring,
+               typevals[i].v_int,
+               typevals[i].v_octetstring);
+    }*/
+    
+    return param;
+}
+
 bool processSMPP(int s) {
     
     uint8_t buf[1024];
@@ -101,9 +155,10 @@ bool processSMPP(int s) {
     uint32_t status = getUint32(buf+8);
     uint32_t seqno = getUint32(buf+12);
     
-    printf("SMPP %x %x %x %x (%d)\n",len,cmd,status,seqno,s);
+    printf("SMPP [0x%x 0x%x 0x%x 0x%x] (%d)\n",len,cmd,status,seqno,s);
     
-    if ((cmd==1)||(cmd==2)||(cmd==9)) {
+    if ((cmd==0x00000001)||(cmd==0x00000002)||(cmd==0x00000009/*bind_transceiver*/)) {
+        
         if (state.bound) {
             sendSMPP(s,cmd+0x80000000,0x00000005/*ESME_RALYBND*/,seqno);
             return false;
@@ -113,11 +168,42 @@ bool processSMPP(int s) {
         sendSMPP(s,cmd+0x80000000,0x00000000/*ESME_ROK*/,seqno,(uint8_t*)systemid,(int)(strlen(systemid)+1));
     }
     
-    if (cmd==4) {
+    if (cmd==0x00000004/*submit_sm*/) {
         
         /*
         ./mtu -d0 -m0x2d -u0x15 -p1 -g12080011047228190600 -a13010008001204448729600010 -i987654321 -s"@@@@@"
          */
+        
+        SMPPTypes submitPDU[] = {COctetString,
+            Integer,Integer,COctetString,
+            Integer,Integer,COctetString,
+            Integer,
+            Integer,
+            Integer,
+            COctetString,
+            COctetString,
+            Integer,
+            Integer,
+            Integer,
+            Integer,
+            Integer,
+            OctetString,
+            NoMoreParams};
+        SMPPTypeVals submitParams[sizeof(submitPDU)];
+        int countParams = parseSMPPPDU(buf+16, (int) l-16,  submitPDU, submitParams );
+        
+        //
+        
+        for(int i=0;i<countParams;i++) {
+            printf("%2d: type(%d) co(%s) i(%d) o(%s)\n",
+                   i,
+                   submitParams[i].type,
+                   submitParams[i].v_coctetstring,
+                   submitParams[i].v_int,
+                   submitParams[i].v_octetstring);
+        }
+        
+        //
         
         // call "int main_inner(argc, argv)" in mtu_main_mod.c
         
@@ -132,11 +218,24 @@ bool processSMPP(int s) {
         n_argv[7] = "-i987654321";
         n_argv[8] = "-s\"Hello world\"";
         
+        char n_argv_5[64]{0};
+        snprintf(n_argv_5,64,"-g%s",submitParams[3].v_coctetstring);
+        n_argv[5] = n_argv_5;
+
+        char n_argv_6[64]{0};
+        snprintf(n_argv_6,64,"-a%s",submitParams[6].v_coctetstring);
+        n_argv[6] = n_argv_6;
+
+        char n_argv_8[256]{0};
+        snprintf(n_argv_8,64,"-s\"%s\"",submitParams[17].v_octetstring);
+        n_argv[8] = n_argv_8;
+        
         main_inner(9,n_argv);
         
+        //
         
         char messageid[32];
-        snprintf(messageid,32,"%08x",gMessageID++);
+        snprintf(messageid,32,"%08llx",gMessageID++);
         sendSMPP(s,cmd+0x80000000,0x00000000/*ESME_ROK*/,seqno,(uint8_t*)messageid,(int)(strlen(messageid)+1));
         
     }
