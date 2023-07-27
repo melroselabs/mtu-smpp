@@ -5,6 +5,8 @@ Perform the following MAP operations using SMPP:
 
 + Forward short message
 
+Code assumes that STP or SCCP hub is at point code 1 (i.e. point code of the Melrose Labs SCCP Hub).
+
 ## Install Dialogic
 
 See https://developers.melroselabs.com/docs/sccp-hub-demo-mtu-mtr
@@ -35,10 +37,10 @@ Run makeall.sh to build
 
 Connect using an SMPP client such as https://melroselabs.com/smppclient.  Host is the IP address of the host where mtu_smpp is running.  Any system ID and password can be used with the example code.
 
-Source address field is the originating address for the MAP request (e.g. 11047228190600).  This is the gateway MSC (e.g. SMSC address).  See MTU -g parameter.
+Source address field is the originating address for the MAP request (e.g. 11047228190600).  This is the gateway MSC (e.g. SMSC address).  See MTU `-g` parameter.
 
-Destination address field is the destination address for the MAP request (e.g. 1204448729600010).  This is the MSC serving the destination mobile number.  See MTU -a parameter.
+Destination address field is the destination address for the MAP request (e.g. 1204448729600010).  This is the MSC serving the destination mobile number.  See MTU `-a` parameter.
 
-Short message field is the short message text to be sent to the destination mobile.  See MTU -s parameter.
+Short message field is the short message text to be sent to the destination mobile.  See MTU `-s` parameter.
 
-The IMSI is currently hard-coded to 987654321.  See MTU -i parameter.
+The IMSI is currently hard-coded to 987654321.  See MTU `-i` parameter.
